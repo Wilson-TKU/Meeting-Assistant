@@ -64,6 +64,34 @@ async def init_db_async() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
+# ── Schema migrations (additive only) ─────────────────────────────────────
+
+_MIGRATIONS = [
+    "ALTER TABLE summaries ADD COLUMN scene VARCHAR(64)",
+]
+
+
+def run_migrations() -> None:
+    """Apply additive schema migrations (sync). Safe to run on every startup."""
+    with engine.connect() as conn:
+        for stmt in _MIGRATIONS:
+            try:
+                conn.execute(__import__("sqlalchemy").text(stmt))
+                conn.commit()
+            except Exception:
+                conn.rollback()  # column already exists or other benign error
+
+
+async def run_migrations_async() -> None:
+    """Apply additive schema migrations (async). Safe to run on every startup."""
+    async with async_engine.begin() as conn:
+        for stmt in _MIGRATIONS:
+            try:
+                await conn.execute(__import__("sqlalchemy").text(stmt))
+            except Exception:
+                pass  # column already exists or other benign error
+
+
 # ── Session context managers ───────────────────────────────────────────────
 
 @contextmanager

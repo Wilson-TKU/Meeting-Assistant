@@ -483,10 +483,16 @@ async function renderSummaryTab(meetingId) {
       ${summaries.length ? summaries.map(s => {
         const cacheKey = `sum_${s.id}`
         _dlCache[cacheKey] = { content: s.content, filename: `${selectedMeeting.title}_${selectedMeeting.date}.md` }
+        const _sceneNames = { weekly_standup:'每週站立會議', project_review:'專案回顧', client_interview:'客戶訪談', general:'一般會議' }
+        const _pMap = Object.fromEntries(prompts.map(p => [p.id, p.name]))
+        const promptLabel = s.prompt_id ? (_pMap[s.prompt_id] || '自訂 Prompt')
+                          : s.scene     ? (_sceneNames[s.scene] || s.scene)
+                          : '未知'
         return `
         <div class="card" style="margin-bottom:10px">
           <div class="row" style="margin-bottom:8px">
             <small style="color:var(--muted);flex:1">${fmtTime(s.created_at)}</small>
+            <span style="font-size:11px;color:var(--muted);background:var(--surface2);padding:2px 8px;border-radius:4px;margin-right:6px">${promptLabel}</span>
             <button class="btn btn-outline btn-sm" onclick="downloadCached('${cacheKey}')">下載</button>
             <button class="btn btn-danger btn-sm" onclick="deleteSummary('${meetingId}','${s.id}')">刪除</button>
           </div>

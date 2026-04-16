@@ -132,6 +132,8 @@ class SummaryResponse(BaseModel):
     transcript_id: Optional[uuid.UUID]
     content: str
     is_aggregated: bool
+    prompt_id: Optional[uuid.UUID]
+    scene: Optional[str]
     created_at: str
 
     @classmethod
@@ -142,6 +144,8 @@ class SummaryResponse(BaseModel):
             transcript_id=s.transcript_id,
             content=s.content,
             is_aggregated=s.is_aggregated,
+            prompt_id=s.prompt_id,
+            scene=s.scene,
             created_at=s.created_at.isoformat(),
         )
 

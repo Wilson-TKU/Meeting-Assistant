@@ -88,6 +88,8 @@ def run_summary(
                 transcript_id=_transcript_id,
                 content=content,
                 content_ref=summary_key,
+                prompt_id=uuid.UUID(prompt_id) if prompt_id else None,
+                scene=scene,
             )
             session.add(summary)
             session.flush()

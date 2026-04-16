@@ -17,6 +17,7 @@ class Summary(Base):
     transcript_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     prompt_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
+    scene: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     content_ref: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     _asset_refs: Mapped[Optional[str]] = mapped_column("asset_refs", Text, nullable=True)
     is_aggregated: Mapped[bool] = mapped_column(default=False)

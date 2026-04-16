@@ -9,13 +9,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from core.config import settings
-from core.database import init_db_async
+from core.database import init_db_async, run_migrations_async
 from services.gateway.routers import meetings, tasks, prompts, documents
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db_async()
+    await run_migrations_async()
     yield
 
 
