@@ -107,6 +107,7 @@ class CorrectRequest(BaseModel):
     llm_api_key: Optional[str] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
+    max_tokens: Optional[int] = None
 
 
 class SummarizeRequest(BaseModel):
@@ -122,6 +123,7 @@ class SummarizeRequest(BaseModel):
     llm_api_key: Optional[str] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
+    max_tokens: Optional[int] = None
 
 
 class SummaryResponse(BaseModel):
@@ -376,7 +378,7 @@ async def start_correction(
         "services.task_worker.tasks.correction.run_correction",
         args=[str(task.id), str(transcript.id), transcript.raw_ref, payload.dictionary_key, payload.terms,
               payload.llm_base_url, payload.llm_model, payload.llm_api_key,
-              payload.temperature, payload.top_p],
+              payload.temperature, payload.top_p, payload.max_tokens],
     )
     task.celery_task_id = celery_result.id
     await db.commit()
@@ -417,7 +419,7 @@ async def start_summary(
               payload.participants, payload.topics, payload.custom_system_prompt,
               str(payload.prompt_id) if payload.prompt_id else None,
               payload.llm_base_url, payload.llm_model, payload.llm_api_key,
-              payload.extra_system_prompt, payload.temperature, payload.top_p],
+              payload.extra_system_prompt, payload.temperature, payload.top_p, payload.max_tokens],
     )
     task.celery_task_id = celery_result.id
     await db.commit()

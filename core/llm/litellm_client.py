@@ -33,7 +33,7 @@ class LiteLLMClient(BaseLLM):
         api_key: str = "",
         api_base: str = "",
         temperature: float = 0.0,
-        max_tokens: int = 4096,
+        max_tokens: Optional[int] = 16384,
         top_p: Optional[float] = None,
     ) -> None:
         self.model = model

@@ -117,8 +117,9 @@ const API = ''  // same origin
 
 // ── Config (localStorage) ──────────────────────────────────────────────────
 function getCfg() {
-  const tempStr = localStorage.getItem('cfg_llm_temperature')
-  const topPStr = localStorage.getItem('cfg_llm_top_p')
+  const tempStr      = localStorage.getItem('cfg_llm_temperature')
+  const topPStr      = localStorage.getItem('cfg_llm_top_p')
+  const maxTokensStr = localStorage.getItem('cfg_llm_max_tokens')
   return {
     stt_url: localStorage.getItem('cfg_stt_url') || '',
     llm_base_url: localStorage.getItem('cfg_llm_url') || '',
@@ -126,6 +127,7 @@ function getCfg() {
     llm_api_key: localStorage.getItem('cfg_llm_key') || '',
     llm_temperature: tempStr !== null && tempStr !== '' ? parseFloat(tempStr) : null,
     llm_top_p: topPStr !== null && topPStr !== '' ? parseFloat(topPStr) : null,
+    llm_max_tokens: maxTokensStr !== null && maxTokensStr !== '' ? parseInt(maxTokensStr) : null,
   }
 }
 
@@ -403,6 +405,7 @@ async function startCorrection(meetingId) {
   if (cfg.llm_api_key) body.llm_api_key = cfg.llm_api_key
   if (cfg.llm_temperature !== null) body.temperature = cfg.llm_temperature
   if (cfg.llm_top_p !== null) body.top_p = cfg.llm_top_p
+  if (cfg.llm_max_tokens !== null) body.max_tokens = cfg.llm_max_tokens
   try {
     const res = await api('POST', `/meetings/${meetingId}/correct`, body)
     const el = document.getElementById('correct-task-status')
@@ -510,6 +513,7 @@ async function startSummary(meetingId) {
   if (cfg.llm_api_key) body.llm_api_key = cfg.llm_api_key
   if (cfg.llm_temperature !== null) body.temperature = cfg.llm_temperature
   if (cfg.llm_top_p !== null) body.top_p = cfg.llm_top_p
+  if (cfg.llm_max_tokens !== null) body.max_tokens = cfg.llm_max_tokens
   try {
     const res = await api('POST', `/meetings/${meetingId}/summarize`, body)
     const el = document.getElementById('summary-task-status')
@@ -766,6 +770,7 @@ async function startAggregation() {
   if (cfg.llm_api_key) body.llm_api_key = cfg.llm_api_key
   if (cfg.llm_temperature !== null) body.temperature = cfg.llm_temperature
   if (cfg.llm_top_p !== null) body.top_p = cfg.llm_top_p
+  if (cfg.llm_max_tokens !== null) body.max_tokens = cfg.llm_max_tokens
   try {
     const res = await api('POST', '/documents/aggregate', body)
     const el = document.getElementById('agg-task-status')
@@ -831,6 +836,7 @@ async function renderSettings() {
   const ovLlmKey      = localStorage.getItem('cfg_llm_key')          || ''
   const ovTemperature = localStorage.getItem('cfg_llm_temperature')  || ''
   const ovTopP        = localStorage.getItem('cfg_llm_top_p')        || ''
+  const ovMaxTokens   = localStorage.getItem('cfg_llm_max_tokens')   || ''
   const cachedModels  = JSON.parse(localStorage.getItem('cfg_llm_available_models') || '[]')
 
   el.innerHTML = `
@@ -882,12 +888,16 @@ async function renderSettings() {
         </div>
         <div style="display:flex;gap:12px">
           <div class="form-group" style="flex:1">
-            <label>Temperature <small style="color:var(--muted)">預設 0</small></label>
-            <input id="cfg-llm-temperature" type="number" min="0" max="2" step="0.1" placeholder="0" value="${ovTemperature}">
+            <label>Temperature <small style="color:var(--muted)">選填</small></label>
+            <input id="cfg-llm-temperature" type="number" min="0" max="2" step="0.1" placeholder="模型預設" value="${ovTemperature}">
           </div>
           <div class="form-group" style="flex:1">
             <label>Top P <small style="color:var(--muted)">選填</small></label>
-            <input id="cfg-llm-top-p" type="number" min="0" max="1" step="0.01" placeholder="1" value="${ovTopP}">
+            <input id="cfg-llm-top-p" type="number" min="0" max="1" step="0.01" placeholder="模型預設" value="${ovTopP}">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Max Tokens <small style="color:var(--muted)">預設 16384</small></label>
+            <input id="cfg-llm-max-tokens" type="number" min="1" step="1" placeholder="16384" value="${ovMaxTokens}">
           </div>
         </div>
       </div>
@@ -947,6 +957,7 @@ async function saveSettings() {
   const llmKey      = document.getElementById('cfg-llm-key').value.trim()
   const temperature = document.getElementById('cfg-llm-temperature').value.trim()
   const topP        = document.getElementById('cfg-llm-top-p').value.trim()
+  const maxTokens   = document.getElementById('cfg-llm-max-tokens').value.trim()
   const msgEl       = document.getElementById('settings-msg')
 
   // Probe non-empty URLs before saving
@@ -972,6 +983,7 @@ async function saveSettings() {
   localStorage.setItem('cfg_llm_key',          llmKey)
   localStorage.setItem('cfg_llm_temperature',  temperature)
   localStorage.setItem('cfg_llm_top_p',        topP)
+  localStorage.setItem('cfg_llm_max_tokens',   maxTokens)
   await renderSettings()
   const m = document.getElementById('settings-msg')
   if (m) {
@@ -982,7 +994,7 @@ async function saveSettings() {
 }
 
 function clearSettings() {
-  ['cfg_stt_url','cfg_llm_url','cfg_llm_model','cfg_llm_key','cfg_llm_available_models','cfg_llm_temperature','cfg_llm_top_p'].forEach(k => localStorage.removeItem(k))
+  ['cfg_stt_url','cfg_llm_url','cfg_llm_model','cfg_llm_key','cfg_llm_available_models','cfg_llm_temperature','cfg_llm_top_p','cfg_llm_max_tokens'].forEach(k => localStorage.removeItem(k))
   renderSettings()
 }
 
