@@ -90,6 +90,7 @@ def run_summary(
                 content_ref=summary_key,
                 prompt_id=uuid.UUID(prompt_id) if prompt_id else None,
                 scene=scene,
+                model_name=llm.model,
             )
             session.add(summary)
             session.flush()

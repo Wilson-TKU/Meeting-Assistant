@@ -22,6 +22,7 @@ class Summary(Base):
     _asset_refs: Mapped[Optional[str]] = mapped_column("asset_refs", Text, nullable=True)
     is_aggregated: Mapped[bool] = mapped_column(default=False)
     _source_meeting_ids: Mapped[Optional[str]] = mapped_column("source_meeting_ids", Text, nullable=True)
+    model_name: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     @property

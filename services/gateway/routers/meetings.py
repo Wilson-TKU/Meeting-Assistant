@@ -134,6 +134,7 @@ class SummaryResponse(BaseModel):
     is_aggregated: bool
     prompt_id: Optional[uuid.UUID]
     scene: Optional[str]
+    model_name: Optional[str]
     created_at: str
 
     @classmethod
@@ -146,6 +147,7 @@ class SummaryResponse(BaseModel):
             is_aggregated=s.is_aggregated,
             prompt_id=s.prompt_id,
             scene=s.scene,
+            model_name=s.model_name,
             created_at=s.created_at.isoformat(),
         )
 

@@ -68,6 +68,7 @@ async def init_db_async() -> None:
 
 _MIGRATIONS = [
     "ALTER TABLE summaries ADD COLUMN scene VARCHAR(64)",
+    "ALTER TABLE summaries ADD COLUMN model_name VARCHAR(256)",
 ]
 
 

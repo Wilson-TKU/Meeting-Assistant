@@ -480,25 +480,37 @@ async function renderSummaryTab(meetingId) {
         <div id="summary-task-status"></div>
       </div>
       <div class="section-title" style="margin:16px 0 10px">歷史摘要（${summaries.length}）</div>
-      ${summaries.length ? summaries.map(s => {
-        const cacheKey = `sum_${s.id}`
-        _dlCache[cacheKey] = { content: s.content, filename: `${selectedMeeting.title}_${selectedMeeting.date}.md` }
+      ${summaries.length ? (() => {
         const _sceneNames = { weekly_standup:'每週站立會議', project_review:'專案回顧', client_interview:'客戶訪談', general:'一般會議' }
         const _pMap = Object.fromEntries(prompts.map(p => [p.id, p.name]))
-        const promptLabel = s.prompt_id ? (_pMap[s.prompt_id] || '自訂 Prompt')
-                          : s.scene     ? (_sceneNames[s.scene] || s.scene)
-                          : '未知'
-        return `
-        <div class="card" style="margin-bottom:10px">
-          <div class="row" style="margin-bottom:8px">
-            <small style="color:var(--muted);flex:1">${fmtTime(s.created_at)}</small>
-            <span style="font-size:11px;color:var(--muted);background:var(--surface2);padding:2px 8px;border-radius:4px;margin-right:6px">${promptLabel}</span>
-            <button class="btn btn-outline btn-sm" onclick="downloadCached('${cacheKey}')">下載</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteSummary('${meetingId}','${s.id}')">刪除</button>
-          </div>
-          <div class="md-body">${marked.parse(s.content)}</div>
-        </div>`
-      }).join('') : '<div class="empty">尚無摘要</div>'}
+        // newest first
+        const sorted = [...summaries].sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
+        return sorted.map((s, idx) => {
+          const cacheKey = `sum_${s.id}`
+          _dlCache[cacheKey] = { content: s.content, filename: `${selectedMeeting.title}_${selectedMeeting.date}.md` }
+          const promptLabel = s.prompt_id ? (_pMap[s.prompt_id] || '自訂 Prompt')
+                            : s.scene     ? (_sceneNames[s.scene] || s.scene)
+                            : '未知'
+          const modelLabel = s.model_name ? s.model_name : ''
+          const isOpen = idx < 5  // newest 5 expanded by default
+          const bodyId = `sum-body-${s.id}`
+          const arrowId = `sum-arrow-${s.id}`
+          return `
+          <div class="card" style="margin-bottom:10px">
+            <div class="row" style="margin-bottom:0;cursor:pointer" onclick="toggleSummaryCard('${bodyId}','${arrowId}')">
+              <small style="color:var(--muted);flex:1">${fmtTime(s.created_at)}</small>
+              <span style="font-size:11px;color:var(--muted);padding:2px 8px;border-radius:4px;margin-right:2px">${promptLabel}</span>
+              ${modelLabel ? `<span style="font-size:11px;color:var(--muted);background:#f1f5f9;border:1px solid var(--border);padding:2px 8px;border-radius:4px;margin-right:6px;font-family:monospace">${modelLabel}</span>` : ''}
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();downloadCached('${cacheKey}')">下載</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteSummary('${meetingId}','${s.id}')">刪除</button>
+              <span id="${arrowId}" style="margin-left:8px;font-size:12px;color:var(--muted);transition:transform 0.15s;display:inline-block;transform:${isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}">▼</span>
+            </div>
+            <div id="${bodyId}" style="margin-top:${isOpen ? '10px' : '0'};display:${isOpen ? '' : 'none'}">
+              <div class="md-body">${marked.parse(s.content)}</div>
+            </div>
+          </div>`
+        }).join('')
+      })() : '<div class="empty">尚無摘要</div>'}
     `
   } catch(e) {
     el.innerHTML = `<div class="empty">${e.message}</div>`
@@ -529,6 +541,16 @@ async function startSummary(meetingId) {
       if (task.status === 'done') renderSummaryTab(meetingId)
     })
   } catch(e) { alert(e.message) }
+}
+
+function toggleSummaryCard(bodyId, arrowId) {
+  const body = document.getElementById(bodyId)
+  const arrow = document.getElementById(arrowId)
+  if (!body) return
+  const opening = body.style.display === 'none'
+  body.style.display = opening ? '' : 'none'
+  body.style.marginTop = opening ? '10px' : '0'
+  if (arrow) arrow.style.transform = opening ? 'rotate(180deg)' : 'rotate(0deg)'
 }
 
 async function deleteSummary(meetingId, summaryId) {
