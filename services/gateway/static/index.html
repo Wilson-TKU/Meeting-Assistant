@@ -741,7 +741,7 @@ async function renderAggregations() {
             <div class="section-title" style="margin-bottom:10px">選擇會議（至少 2 場）</div>
             ${meetings.map(m => `
               <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer">
-                <input type="checkbox" value="${m.id}" class="agg-meeting-cb">
+                <input type="checkbox" value="${m.id}" class="agg-meeting-cb" style="width:auto">
                 <span>${m.title} <small style="color:var(--muted)">${m.date}</small></span>
               </label>`).join('')}
             <hr class="divider">
