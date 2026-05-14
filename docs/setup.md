@@ -53,18 +53,19 @@
 
 ## 二、作業系統與軟體需求
 
-> ℹ️ 下表的版本欄位部分為估計值，待實際部署環境驗證後會以實測值更新。
+> ℹ️ 「實測版本」欄為本專案實際部署成功的最低版本參考（於 Ubuntu 20.04 + RTX 4080 環境驗證）。即使部分項目低於原列的最低版本，實測仍可運行；建議新部署仍以「建議版本」為主，避免邊緣情境。
 
-| 項目 | 最低版本 | 實測版本 | 備註 |
+| 項目 | 建議版本 | 實測可用版本 | 備註 |
 |---|---|---|---|
-| 作業系統 | Ubuntu 22.04 LTS | _待填_ | Ubuntu 24.04 / Windows 11 + WSL2 亦可；**不支援裸 Windows / macOS**，因 NVIDIA Container Toolkit 需要 Linux |
-| NVIDIA Driver | ≥ 525 | _待填_ | CUDA 12.2 相容；跑 `nvidia-smi` 確認 |
-| Docker Engine | ≥ 24.0 | _待填_ | |
-| Docker Compose plugin | ≥ v2.20 | _待填_ | 用 `docker compose version` 確認（注意是 `docker compose`，不是舊版 `docker-compose`） |
-| NVIDIA Container Toolkit | 最新 | _待填_ | 讓 Docker 容器能用 GPU |
-| Git | ≥ 2.25 | _待填_ | 用來 clone 專案 |
+| 作業系統 | Ubuntu 22.04 LTS | Ubuntu 20.04.4 LTS | Ubuntu 24.04 / Windows 11 + WSL2 亦可；**不支援裸 Windows / macOS**，因 NVIDIA Container Toolkit 需要 Linux。20.04 實測可用，但 22.04+ 較易取得新版 Docker |
+| NVIDIA Driver | ≥ 525 | 535.183.06 | CUDA 12.2 相容；跑 `nvidia-smi` 確認 |
+| GPU | RTX 3060 12GB 以上 | RTX 4080 16GB | 實測使用 `large-v3` 模型約佔 5GB VRAM |
+| Docker Engine | ≥ 24.0 | 23.0.3 | 23.x 實測可運行；若是全新部署仍建議升到 24.0+ |
+| Docker Compose plugin | ≥ v2.20 | v2.17.2 | 用 `docker compose version` 確認（注意是 `docker compose`，不是舊版 `docker-compose`） |
+| NVIDIA Container Toolkit | 最新 | 1.16.1 | 讓 Docker 容器能用 GPU |
+| Git | ≥ 2.25 | 2.25.1 | 用來 clone 專案 |
 | 瀏覽器 | Chrome / Edge / Firefox 最新版 | — | 操作 Web UI |
-| Python（選用） | ≥ 3.11 | _待填_ | 只有要跑 CLI 或開發模式才需要；純用 Docker + Web UI 可忽略 |
+| Python（選用） | ≥ 3.11 | 3.8.10（系統內建，僅作為 host shell；Docker 容器內為 3.11） | 只有要在 host 上跑 CLI 或開發模式才需要 3.11；純用 Docker + Web UI 可忽略 |
 
 下面是 Ubuntu 22.04 / 24.04 的完整安裝指令，**從一台全新機器開始**也適用。其他發行版請對照官方文件。
 
@@ -263,15 +264,35 @@ curl -fsSL https://ollama.com/install.sh | sh
 ollama pull qwen3:4b
 ```
 
+**⚠️ 重要：Ollama 預設只聽 `127.0.0.1`，Docker 容器連不到。**啟動時要明確指定 `OLLAMA_HOST=0.0.0.0`：
+
+```bash
+# 殺掉預設的 ollama serve（若有）
+pkill -f "ollama serve"
+
+# 改用 0.0.0.0 啟動
+OLLAMA_HOST=0.0.0.0:11434 ollama serve > /tmp/ollama.log 2>&1 &
+
+# 驗證有聽在所有介面
+ss -tlnp | grep 11434
+# 預期看到 *:11434（而非 127.0.0.1:11434）
+```
+
+> 若你是用 `systemd` 管 Ollama（`systemctl --user enable ollama` 或 `/etc/systemd/system/ollama.service`），則改在 service 檔的 `[Service]` 區段加 `Environment="OLLAMA_HOST=0.0.0.0"`，然後 `systemctl daemon-reload && systemctl restart ollama`。
+
 `.env` 改成：
 
 ```env
-LLM_MODEL=ollama/qwen3:4b
-LLM_API_KEY=
+LLM_MODEL=qwen3:4b
+LLM_API_KEY=ollama
 LLM_BASE_URL=http://host.docker.internal:11434
 ```
 
 > `host.docker.internal` 是固定關鍵字，代表「Docker 容器要連到主機本身」。docker-compose.yml 已經設定好對應。
+>
+> **注意 1：** `LLM_MODEL` 直接填 `qwen3:4b`，不要加 `ollama/` 前綴（專案內走 Ollama 的 OpenAI-compatible `/v1` 端點）。
+>
+> **注意 2：** `LLM_API_KEY` **不能空字串**，填任意非空字串（例：`ollama`、`no-key`）。空字串時 LiteLLM 會去找 `OPENAI_API_KEY` 環境變數而報 AuthenticationError。
 
 ### 範例 D：用本機 vLLM（高品質、內網保密）
 
@@ -311,11 +332,11 @@ docker compose up -d --build
 docker compose ps
 ```
 
-預期看到 5 個 service，狀態都是 `running` 或 `healthy`：
+預期看到 5 個 service 都 `Up`，其中 `redis` 與 `stt_service` 會額外標 `(healthy)`（這兩個有設 healthcheck，其餘三個只看 `Up` 即可）：
 
 ```
 NAME                                 STATUS
-meeting-assistant-gateway-1          Up (healthy)
+meeting-assistant-gateway-1          Up
 meeting-assistant-redis-1            Up (healthy)
 meeting-assistant-stt_service-1      Up (healthy)
 meeting-assistant-task_worker_llm-1  Up
