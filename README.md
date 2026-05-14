@@ -135,6 +135,7 @@ pytest --cov=core                # with coverage report
 
 | | |
 |--|--|
+| [Setup Guide](docs/setup.md) | **完整部署手冊（繁中）** — 從全新 Ubuntu 機器開始：硬體 / OS / Docker / GPU 安裝、第一場會議步驟、故障排除、備份 |
 | [Usage Guide](docs/usage.md) | CLI commands, Web UI walkthrough, REST API examples with curl |
 | [Development Guide](docs/development.md) | Dev setup, project structure, adding features |
 | [Architecture](docs/architecture.md) | Design decisions, data flow, abstraction layers, upgrade paths |
